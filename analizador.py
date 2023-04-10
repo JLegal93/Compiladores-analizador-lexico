@@ -14,8 +14,8 @@ def getChar():
         return False
 
 
-def tmatch (spectedToken):
-    if(not spectedToken == currentChar):
+def tmatch (spectedChar):
+    if(not spectedChar == currentChar):
         print("error en la posicion:" + currentIndex + ",simbolo no esperado")
     getChar()
 
