@@ -1,79 +1,133 @@
-def starswiththese(string, array):
-    for lex in array:
-        if string.strip().upper().startswith(lex.strip().upper()):
-            return True
-    return False
+currentIndex = 0
+currentChar = ''
+fileText = open("fuente.txt", "r").read()
+output_file = open("output_file.txt", "w")
+def getChar():
+    global currentChar
+    global currentIndex
+    if(currentIndex < len(fileText)-1):
+        currentChar = fileText[currentIndex]
+        currentIndex += 1
+        return True
+    else:
+        currentChar = ''
+        return False
 
-def readfile():
-    input_file = open("fuente.txt", "r")
-    output_file = open("output_file.txt", "w")
-    mislexemas = \
-        {
-            '{': 'L_LLAVE',
-            '}': 'R_LLAVE',
-            '[': 'L_CORCHETE',
-            ']': 'R_CORCHETE',
-            ':': 'DOS_PUNTOS',
-            ',': 'COMA',
-            'str': 'STRING',
-            'num': 'NUMBER',
-            'FALSE': 'PR_FALSE',
-            'TRUE': 'PR_TRUE',
-            'NULL': 'PR_NULL',
-            '\n': '\n',
-        }
-    aux_string = ''
-    quote_count = 0
-    line_count = 0
-    number_count = 0
-    for line in input_file:
-        line_count += 1
-        for lex in line:
-            token = mislexemas.get(lex)
-            if lex == '"':
-                quote_count += 1
-            if len(aux_string) < 20:
-                aux_string += lex
-                if lex.isspace():
-                    output_file.write(lex)
-            else:
-                aux_string = ''
 
-            if token is not None:
-                output_file.write(mislexemas.get(lex) + ' ')
-                aux_string = ''
-                number_count = 0
+def tmatch (spectedToken):
+    if(not spectedToken == currentChar):
+        print("error en la posicion:" + currentIndex + ",simbolo no esperado")
+    getChar()
 
-            elif lex.isalnum() or quote_count > 0:
-                if quote_count == 2:
-                    quote_count = 0
-                    output_file.write(mislexemas.get('str') + ' ')
-                elif quote_count == 0:
-                    if lex.isnumeric() and number_count < 1:
-                        output_file.write(mislexemas.get('num') + ' ')
-                        number_count += 1
-                    elif not lex.isnumeric():
-                        token = mislexemas.get(aux_string.strip().upper())
-                        if token is not None:
-                            output_file.write(token + ' ')
-                            aux_string = ''
-                            number_count = 0
-                        else:
-                            coinc = 0
-                            for lexe in mislexemas:
-                                if lexe.upper().strip().startswith(aux_string.upper().strip()) \
-                                        or aux_string.isnumeric():
-                                    coinc = 1
-                            if coinc == 0:
-                                print(f"Lexema no reconocido linea:{line_count}")
-            elif not lex.isspace() and len(aux_string) < 1:
-                print(f"Lexema no reconocido linea:{line_count}")
-    print("Proceso concluido... se genera el archivo 'output_file.txt' en el mismo directorio que el programa.")
-    input_file.close()
+def stringrp():
+    if (currentChar == '"'):
+        tmatch('"')
+        output_file.write('STRING ')
+    else:
+        getChar()
+        stringrp()
+
+def stringr():
+
+    if (currentChar == '"'):
+        tmatch('"')
+        stringr()
+    else:
+        stringrp()
+
+def list():
+    if (currentChar == '['):
+        tmatch('[')
+        output_file.write('L_CORCHETE \n\t')
+        attr()
+    elif (currentChar == ','):
+        attr()
+    elif (currentChar == ']'):
+        tmatch(']')
+        output_file.write('L_CORCHETE\n\t')
+        attr()
+
+def truer():
+    if (currentChar == 't'):
+        trueString = currentChar
+        for number in range(3):
+            getChar()
+            trueString += currentChar
+        if (trueString.lower() == 'true'):
+            output_file.write('PR_TRUE ')
+            attr()
+
+def falser():
+    if (currentChar == 'f'):
+        trueString = currentChar
+        for number in range(4):
+            getChar()
+            trueString += currentChar
+        if (trueString.lower() == 'false'):
+            output_file.write('PR_FALSE ')
+            attr()
+
+def numberr():
+    if (currentChar.isnumeric()):
+        getChar()
+        numberr()
+    else:
+        attr()
+
+def attr():
+    if (currentChar == '"'):
+        stringr()
+        attr()
+    elif (currentChar == ':'):
+        tmatch(':')
+        output_file.write('DOS_PUNTOS ')
+        attr()
+    elif (currentChar == '{'):
+        obj()
+    elif (currentChar == '['):
+        list()
+    elif (currentChar == ']'):
+        tmatch(']')
+        output_file.write('R_CORCHETE \n')
+        attr()
+    elif (currentChar == 't'):
+        truer()
+    elif (currentChar == 'f'):
+        falser()
+    elif (currentChar.isnumeric()):
+        output_file.write('NUMBER ')
+        getChar()
+        numberr()
+    elif (currentChar == '}'):
+        obj()
+    elif (currentChar == ','):
+        tmatch(',')
+        output_file.write('COMA \n\t')
+        attr()
+    elif(getChar()):
+        attr()
+
+
+def obj():
+    if (currentChar == '{'):
+        tmatch('{')
+        output_file.write('L_LLAVE \n\t')
+    if (currentChar == '}'):
+        tmatch('}')
+        output_file.write('R_LLAVE\n')
+    attr()
+
+
+
+def json():
+    getChar()
+    obj()
     output_file.close()
+    print("Proceso terminado... Archivo generado en el mismo directorio que este programa.")
+
 
 def main():
-    readfile()
+    json()
 
 if __name__ == '__main__':
     main()
